@@ -1,0 +1,12 @@
+Library yang dibutuhkan pada aplikasi ini adalah sebagai berikut :
+- pandas
+- matplotlib
+- numpy
+- scipy
+- sympy
+- streamlit
+- openpyxl
+
+
+Virtual Environment
+-myenv
