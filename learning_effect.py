@@ -28,53 +28,34 @@ st.write('''<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400
 <style>
 
     body {
-
         font-family: 'Roboto', sans-serif;
-
     }
 
     .reportview-container {
-
         background: #f0f2f6;
-
     }
 
     .stButton>button {
-
         background-color: #FF4B4B;
-
         color: white;
-
         border-radius: 10px;
-
         padding: 10px;
-
         font-size: 16px;
-
     }
 
     .stTextInput>div>input {
-
         border: 2px solid #FF4B4B;
-
         border-radius: 5px;
-
     }
 
     .stMarkdown {
-
         font-size: 18px;
-
         color: #333;
-
     }
 
     .stDataFrame {
-
         border: 1px solid #FF4B4B;
-
         border-radius: 5px;
-
     }
 
 </style>''', unsafe_allow_html=True)
@@ -90,15 +71,27 @@ data = pd.DataFrame()
 
 if input_option == "Upload File Excel":
     # Upload file
-    uploaded_file = st.file_uploader("Unggah file Excel dengan kolom 'Waktu Belajar' dan 'IPK'", type=["xlsx"])
+    uploaded_file = st.file_uploader("Unggah file Excel dengan kolom 'Waktu Belajar', dan 'IPK'", type=["xlsx"])
 
     if uploaded_file:
-        # Baca data
-        data = pd.read_excel(uploaded_file)
+        # Baca data dengan menetapkan tipe data untuk kolom tertentu
+        try:
+            data = pd.read_excel(
+                uploaded_file,
+                dtype={"NPM": str, "Angkatan": str}  # Pastikan kolom 'NPM' dan 'Angkatan' dibaca sebagai string
+            )
+        except ValueError:
+            st.error("Terjadi kesalahan saat membaca file. Pastikan file memiliki format yang benar.")
+            st.stop()
+        
+        # Pastikan kolom 'Angkatan' berupa string untuk menghindari format desimal
+        if 'Angkatan' in data.columns:
+            data['Angkatan'] = data['Angkatan'].astype(str)
         
         # Validasi kolom
-        if "Waktu Belajar" not in data.columns or "IPK" not in data.columns:
-            st.error("Kolom 'Waktu Belajar' atau 'IPK' tidak ditemukan dalam file.")
+        required_columns = ["Waktu Belajar", "IPK"]
+        if not all(col in data.columns for col in required_columns):
+            st.error("File tidak memiliki semua kolom yang dibutuhkan: 'Nama', 'NPM', 'Prodi', 'Waktu Belajar', dan 'IPK'.")
         else:
             st.subheader("Data Waktu Belajar dan IPK")
             st.dataframe(data)
@@ -109,12 +102,22 @@ elif input_option == "Input Manual":
 
     manual_data = []
     for i in range(num_samples):
-        col1, col2 = st.columns(2)
+        st.markdown(f"### Data Mahasiswa {i+1}")
+        col1, col2, col3 = st.columns(3)
         with col1:
-            time = st.number_input(f"Waktu belajar (jam) - Mahasiswa {i+1}", min_value=0.0, step=0.5, key=f"time_{i}")
+            name = st.text_input(f"Nama - Mahasiswa {i+1}", key=f"name_{i}")
         with col2:
+            npm = st.text_input(f"NPM - Mahasiswa {i+1}", key=f"npm_{i}")
+        with col3:
+            prodi = st.text_input(f"Prodi - Mahasiswa {i+1}", key=f"prodi_{i}")
+
+        col4, col5 = st.columns(2)
+        with col4:
+            time = st.number_input(f"Waktu belajar (jam) - Mahasiswa {i+1}", min_value=0.0, step=0.5, key=f"time_{i}")
+        with col5:
             ipk = st.number_input(f"IPK - Mahasiswa {i+1}", min_value=0.0, max_value=4.0, step=0.01, key=f"ipk_{i}")
-        manual_data.append({"Waktu Belajar": time, "IPK": ipk})
+        
+        manual_data.append({"Nama": name, "NPM": npm, "Prodi": prodi, "Waktu Belajar": time, "IPK": ipk})
 
     data = pd.DataFrame(manual_data)
     st.subheader("Data Waktu Belajar dan IPK")
