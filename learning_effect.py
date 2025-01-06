@@ -5,19 +5,28 @@ from scipy.integrate import quad
 from sympy import symbols, integrate
 import streamlit as st
 
-# Fungsi pengaruh waktu belajar terhadap IPK
+# Fungsi pengaruh waktu belajar terhadap IPK dengan batasan logistik
 def learning_effect(t):
-    return 0.05 * t ** 2 - 0.3 * t + 2
+    k = 0.5  # Parameter logistik
+    t0 = 10  # Titik tengah logistik
+    return 4 / (1 + np.exp(-k * (t - t0)))
 
 # Fungsi untuk menghitung integral tentu
 def calculate_integral(start_time, end_time):
+    if start_time < 0 or end_time < 0:
+        return "Waktu belajar tidak boleh negatif."
+    if start_time > end_time:
+        return "Batas awal tidak boleh lebih besar dari batas akhir."
+
     total_effect, _ = quad(learning_effect, start_time, end_time)
     return total_effect
 
 # Fungsi untuk menghitung integral tak tentu
 def calculate_indefinite_integral():
     t = symbols('t')
-    f_t = 0.05 * t**2 - 0.3 * t + 2
+    k = 0.5
+    t0 = 10
+    f_t = 4 / (1 + symbols('e')**(-k * (t - t0)))
     F_t = integrate(f_t, t)
     return F_t
 
@@ -95,11 +104,14 @@ if not data.empty:
     st.latex(f"a = {start_time}, \\ b = {end_time}")
 
     st.markdown("### Total Pengaruh Waktu Belajar terhadap IPK (Integral Tentu)")
-    st.latex(r"IPK = \int_{a}^{b} \left( 0.05t^2 - 0.3t + 2 \right) \, dt")
-    st.latex(f"IPK = {total_effect:.2f}")
+    if isinstance(total_effect, str):
+        st.error(total_effect)
+    else:
+        st.latex(r"IPK = \int_{a}^{b} \left( \frac{4}{1+e^{-k(t-t_0)}} \right) \, dt")
+        st.latex(f"IPK = {total_effect:.2f}")
 
     st.markdown("### Model Matematis Hubungan Waktu Belajar terhadap IPK (Integral Tak Tentu)")
-    st.latex(r"F(t) = \int \left( 0.05t^2 - 0.3t + 2 \right) \, dt")
+    st.latex(r"F(t) = \int \left( \frac{4}{1+e^{-k(t-t_0)}} \right) \, dt")
     st.latex(f"F(t) = {indefinite_integral} + C")
 
     st.subheader("Visualisasi Hubungan Waktu Belajar dan IPK")
@@ -134,4 +146,3 @@ st.write("Fakultas Ilmu Komputer dan Sains")
 st.write("Universitas Indo Global Mandiri")
 st.image("uigm.png", caption="Universitas Indo Global Mandiri", width=150)
 st.image("logoTI.png", caption="TI Universitas Indo Global Mandiri", width=150)
-  
